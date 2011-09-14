@@ -72,7 +72,7 @@ describe UsersController do
       end
     end
     
-    describe "failure" do
+    describe "success" do
       
       before(:each) do
         @attr = {:name => "Jason Fletcher", :email => "jason.fletcher@gmail.com",
@@ -95,6 +95,10 @@ describe UsersController do
         flash[:success].should =~ /welcome to the sample app/i
       end
       
+      it "should sign in the user" do
+        post :create, :user => @attr
+        controller.should be_signed_in
+      end
     end
   end
 
