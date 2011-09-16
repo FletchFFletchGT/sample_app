@@ -1,11 +1,15 @@
 class UsersController < ApplicationController
-  before_filter :authenticate, :only => [:edit, :update, :index]
+  before_filter :authenticate, :only => [:edit, :update, :index, :destroy]
   before_filter :correct_user, :only => [:edit, :update]
   before_filter :admin_user, :only => :destroy
   
   def new
-    @title = "Sign up"
-    @user = User.new
+    if signed_in?
+      redirect_to root_path
+    else
+     @title = "Sign up"
+     @user = User.new
+   end
   end
   
   def index
@@ -15,18 +19,24 @@ class UsersController < ApplicationController
   
   def show
     @user = User.find(params[:id])
+    @microposts = @user.microposts.paginate(:page => params[:page])
     @title = @user.name
   end
   
   def create
-    @user = User.new(params[:user])
-    if @user.save
-      sign_in @user
-      flash[:success] = "Welcome to the Sample App!"
-      redirect_to @user
+    
+    if signed_in?
+      redirect_to root_path
     else
-      @title = "Sign up"
-      render 'new'
+      @user = User.new(params[:user])
+      if @user.save
+        sign_in @user
+        flash[:success] = "Welcome to the Sample App!"
+        redirect_to @user
+      else
+        @title = "Sign up"
+        render 'new'
+      end
     end
   end
   
@@ -52,10 +62,6 @@ class UsersController < ApplicationController
   end
   
   private
-  
-    def authenticate
-      deny_access unless signed_in?
-    end
     
     def correct_user
       @user = User.find(params[:id])

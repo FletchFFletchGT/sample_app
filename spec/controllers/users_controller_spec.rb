@@ -84,21 +84,61 @@ describe UsersController do
       get :show, :id => @user
       response.should have_selector("h1>img", :class => "gravatar")
     end
+    
+    it "should show microposts" do
+      mp1 = Factory(:micropost, :user => @user, :content => "Test post the first")
+      mp2 = Factory(:micropost, :user => @user, :content => "Test post the second")
+      get :show, :id => @user
+      response.should have_selector("span.content", :content => mp1.content)
+      response.should have_selector("span.content", :content => mp2.content)
+    end
   end
     
   describe "GET 'new'" do
-    it "should be successful" do
-      get :new
-      response.should be_success
+    
+    describe "not signed in users" do
+      it "should be successful" do
+        get :new
+        response.should be_success
+      end
+    
+      it "should have the right title" do
+        get :new
+        response.should have_selector("title", :content => "Sign up")
+      end
     end
     
-    it "should have the right title" do
-      get :new
-      response.should have_selector("title", :content => "Sign up")
+    describe "signed in users" do
+      
+      before(:each) do
+        @user = Factory(:user)
+        test_sign_in(@user)
+      end
+      
+      it "should redirect to the root" do
+        get :new
+        response.should redirect_to(root_path)
+      end
     end
+        
   end
   
   describe "POST 'create'" do
+    
+    describe "signed in users" do
+      
+      before(:each) do
+        @user = Factory(:user)
+        test_sign_in(@user)
+      end
+      
+      it "should redirect to the root" do
+        @attr = {:name => "Jason Fletcher", :email => "jason.fletcher@gmail.com",
+                  :password => "foobar", :password_confirmation => "foobar"}
+        get :create, :user => @attr
+        response.should redirect_to(root_path)
+      end
+    end
     
     describe "failure" do
       
@@ -312,10 +352,11 @@ describe UsersController do
 
   describe "admin attribute" do
     
-    @attr = {:name => "Other Fletcher", :email => "other.fletcher@gmail.com",
-              :password => "poopie", :password_confirmation => "poopie"}
+    
               
     before(:each) do
+      @attr = {:name => "Other Fletcher", :email => "other.fletcher@gmail.com",
+                :password => "poopie", :password_confirmation => "poopie"}
       @user = User.create!(@attr)
     end
     
